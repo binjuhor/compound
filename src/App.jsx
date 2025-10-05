@@ -14,14 +14,16 @@ function App() {
   const [showBreakdown, setShowBreakdown] = useState(false)
 
   const formatNumber = (value) => {
-    if (!value) return ''
+    if (!value || value === '' || value === '0') return ''
     const numericValue = parseFloat(value)
-    if (isNaN(numericValue)) return ''
+    if (isNaN(numericValue) || numericValue === 0) return ''
     return new Intl.NumberFormat('vi-VN').format(numericValue) + ' ₫'
   }
 
   const parseNumber = (value) => {
-    return value.replace(/\./g, '').replace(/₫/g, '').replace(/\s/g, '').trim()
+    if (!value) return ''
+    const cleaned = value.replace(/\./g, '').replace(/₫/g, '').replace(/\s/g, '').trim()
+    return cleaned === '' ? '' : cleaned
   }
 
   const formatInterestRate = (value) => {
@@ -254,8 +256,8 @@ function App() {
                     label={{ value: 'Năm', position: 'insideBottom', offset: -5 }}
                   />
                   <YAxis
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
-                    label={{ value: 'Số Tiền (VND)', angle: -90, position: 'insideLeft', offset: 10 }}
+                    tickFormatter={(value) => `${(value / 1000000000).toFixed(0)}B`}
+                    label={{ value: 'Số Tiền (VND)', angle: -90, position: 'insideLeft', offset: 5 }}
                   />
                   <Tooltip
                     formatter={(value) => formatCurrency(value)}
