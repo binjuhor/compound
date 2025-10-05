@@ -15,11 +15,13 @@ function App() {
 
   const formatNumber = (value) => {
     if (!value) return ''
-    return new Intl.NumberFormat('vi-VN').format(value)
+    const numericValue = parseFloat(value)
+    if (isNaN(numericValue)) return ''
+    return new Intl.NumberFormat('vi-VN').format(numericValue) + ' ₫'
   }
 
   const parseNumber = (value) => {
-    return value.replace(/\./g, '')
+    return value.replace(/\./g, '').replace(/₫/g, '').replace(/\s/g, '').trim()
   }
 
   const handleInputChange = (field, value) => {
@@ -123,24 +125,24 @@ function App() {
 
           <div className="form-grid">
             <div className="input-group">
-              <label htmlFor="initialInvestment">Số Vốn Ban Đầu (VND)</label>
+              <label htmlFor="initialInvestment">Số Vốn Ban Đầu</label>
               <input
                 id="initialInvestment"
                 type="text"
                 value={formatNumber(formData.initialInvestment)}
                 onChange={(e) => handleInputChange('initialInvestment', e.target.value)}
-                placeholder="100.000.000"
+                placeholder="100.000.000 ₫"
               />
             </div>
 
             <div className="input-group">
-              <label htmlFor="monthlyContribution">Đóng Góp Hàng Tháng (VND)</label>
+              <label htmlFor="monthlyContribution">Đóng Góp Hàng Tháng</label>
               <input
                 id="monthlyContribution"
                 type="text"
                 value={formatNumber(formData.monthlyContribution)}
                 onChange={(e) => handleInputChange('monthlyContribution', e.target.value)}
-                placeholder="5.000.000"
+                placeholder="5.000.000 ₫"
               />
             </div>
 
