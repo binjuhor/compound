@@ -55,9 +55,14 @@ function App() {
 
       const futureValuePrincipal = P * Math.pow(1 + r / m, periodsElapsed)
 
-      const futureValueContributions = PMT *
-        ((Math.pow(1 + r / m, periodsElapsed) - 1) / (r / m)) *
-        (m / 12)
+      const monthlyRate = Math.pow(1 + r / m, m / 12) - 1
+
+      let futureValueContributions = 0
+      if (monthlyRate > 0) {
+        futureValueContributions = PMT * ((Math.pow(1 + monthlyRate, monthsElapsed) - 1) / monthlyRate)
+      } else {
+        futureValueContributions = PMT * monthsElapsed
+      }
 
       const futureValue = futureValuePrincipal + futureValueContributions
       const interestEarned = futureValue - totalContributions
