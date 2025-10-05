@@ -24,9 +24,26 @@ function App() {
     return value.replace(/\./g, '').replace(/₫/g, '').replace(/\s/g, '').trim()
   }
 
+  const formatInterestRate = (value) => {
+    if (!value) return ''
+    return value + ' %'
+  }
+
+  const parseInterestRate = (value) => {
+    return value.replace(/%/g, '').replace(/\s/g, '').replace(',', '.').trim()
+  }
+
   const handleInputChange = (field, value) => {
-    const numericValue = parseNumber(value)
-    setFormData({ ...formData, [field]: numericValue })
+    if (field === 'interestRate') {
+      const numericValue = parseInterestRate(value)
+      setFormData({ ...formData, [field]: numericValue })
+    } else if (field === 'years') {
+      const normalizedValue = value.replace(',', '.')
+      setFormData({ ...formData, [field]: normalizedValue })
+    } else {
+      const numericValue = parseNumber(value)
+      setFormData({ ...formData, [field]: numericValue })
+    }
   }
 
   const calculateCompoundInterest = () => {
@@ -152,15 +169,13 @@ function App() {
             </div>
 
             <div className="input-group">
-              <label htmlFor="interestRate">Lãi Suất Hàng Năm (%)</label>
+              <label htmlFor="interestRate">Lãi Suất Hàng Năm</label>
               <input
                 id="interestRate"
-                type="number"
-                min="0"
-                step="0.1"
-                value={formData.interestRate}
+                type="text"
+                value={formatInterestRate(formData.interestRate)}
                 onChange={(e) => handleInputChange('interestRate', e.target.value)}
-                placeholder="7"
+                placeholder="7.2 % hoặc 7,2 %"
               />
             </div>
 
@@ -240,7 +255,7 @@ function App() {
                   />
                   <YAxis
                     tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
-                    label={{ value: 'Số Tiền (VND)', angle: -90, position: 'insideLeft' }}
+                    label={{ value: 'Số Tiền (VND)', angle: -90, position: 'insideLeft', offset: 10 }}
                   />
                   <Tooltip
                     formatter={(value) => formatCurrency(value)}
