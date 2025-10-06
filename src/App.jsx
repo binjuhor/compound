@@ -125,6 +125,16 @@ function App() {
     }).format(value)
   }
 
+  const formatYAxis = (value) => {
+    if (value === 0) {
+      return '0 ₫'
+    }
+    if (value >= 1000000000) {
+      return `${(value / 1000000000).toFixed(1)} tỷ`
+    }
+    return `${(value / 1000000).toFixed(1)} triệu`
+  }
+
   const canCalculate = () => {
     return formData.initialInvestment &&
            formData.monthlyContribution &&
@@ -253,17 +263,19 @@ function App() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="year"
-                    label={{ value: 'Năm', position: 'insideBottom', offset: -5 }}
+                    label={{ value: 'Năm', position: 'insideBottom', offset: -5, style: { fontSize: '12px' } }}
+                    tick={{ fontSize: 12 }}
                   />
                   <YAxis
-                    tickFormatter={(value) => `${(value / 1000000000).toFixed(0)}B`}
-                    label={{ value: 'Số Tiền (VND)', angle: -90, position: 'insideLeft', offset: 5 }}
+                    tickFormatter={formatYAxis}
+                    label={{ value: 'Số Tiền (VND)', angle: -90, position: 'insideLeft', offset: 5, style: { fontSize: '12px' } }}
+                    tick={{ fontSize: 12 }}
                   />
                   <Tooltip
                     formatter={(value) => formatCurrency(value)}
                     labelFormatter={(label) => `Năm ${label}`}
                   />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
                   <Line
                     type="monotone"
                     dataKey="totalContributions"
