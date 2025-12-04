@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, LineChart } from 'recharts'
 import './App.css'
 
@@ -12,6 +12,11 @@ function App() {
   })
   const [results, setResults] = useState(null)
   const [showBreakdown, setShowBreakdown] = useState(false)
+
+  const initialInvestmentRef = useRef(null)
+  const monthlyContributionRef = useRef(null)
+  const interestRateRef = useRef(null)
+  const cursorPositionRef = useRef(null)
 
   const formatNumber = (value) => {
     if (!value || value === '' || value === '0') return ''
@@ -35,17 +40,66 @@ function App() {
     return value.replace(/%/g, '').replace(/\s/g, '').replace(',', '.').trim()
   }
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field, value, ref) => {
+    const currentCursorPos = ref?.current?.selectionStart || 0
+
     if (field === 'interestRate') {
       const numericValue = parseInterestRate(value)
       setFormData({ ...formData, [field]: numericValue })
+
+      const digitsBefore = value.slice(0, currentCursorPos).replace(/[^\d.,]/g, '').length
+      const newValue = formatInterestRate(numericValue)
+
+      let newPos = 0
+      let digitCount = 0
+      for (let i = 0; i < newValue.length; i++) {
+        if (/[\d.,]/.test(newValue[i])) digitCount++
+        if (digitCount >= digitsBefore) {
+          newPos = i + 1
+          break
+        }
+      }
+
+      cursorPositionRef.current = { ref, position: newPos || newValue.length }
     } else if (field === 'years') {
       const normalizedValue = value.replace(',', '.')
       setFormData({ ...formData, [field]: normalizedValue })
     } else {
       const numericValue = parseNumber(value)
       setFormData({ ...formData, [field]: numericValue })
+
+      const digitsBefore = value.slice(0, currentCursorPos).replace(/\D/g, '').length
+      const newValue = formatNumber(numericValue)
+
+      let newPos = 0
+      let digitCount = 0
+      for (let i = 0; i < newValue.length; i++) {
+        if (/\d/.test(newValue[i])) digitCount++
+        if (digitCount >= digitsBefore) {
+          newPos = i + 1
+          break
+        }
+      }
+
+      cursorPositionRef.current = { ref, position: newPos || newValue.length }
     }
+  }
+
+  useEffect(() => {
+    if (cursorPositionRef.current) {
+      const { ref, position } = cursorPositionRef.current
+      if (ref?.current) {
+        ref.current.setSelectionRange(position, position)
+      }
+      cursorPositionRef.current = null
+    }
+  })
+
+  const getDisplayValue = (field) => {
+    if (field === 'interestRate') {
+      return formatInterestRate(formData[field])
+    }
+    return formatNumber(formData[field])
   }
 
   const calculateCompoundInterest = () => {
@@ -148,64 +202,80 @@ function App() {
 
   return (
     <div className="app">
-      <header>
-        <h1>Máy Tính Lãi Kép</h1>
-        <p className="subtitle">Tính toán tăng trưởng đầu tư của bạn theo thời gian</p>
-      </header>
-
       <div className="calculator-container">
         <div className="input-section">
-          <h2>Thông Tin Đầu Tư</h2>
-
           <div className="form-grid">
+            <div className="form-heading">Bước 1: Đầu tư ban đầu</div>
             <div className="input-group">
-              <label htmlFor="initialInvestment">Số Vốn Ban Đầu</label>
+              <div>
+                <label htmlFor="initialInvestment">Số Vốn Ban Đầu</label>
+                <small>Số tiền bạn có sẵn để đầu tư ban đầu.</small>
+              </div>
               <input
+                ref={initialInvestmentRef}
                 id="initialInvestment"
-                type="text"
-                value={formatNumber(formData.initialInvestment)}
-                onChange={(e) => handleInputChange('initialInvestment', e.target.value)}
+                type="tel"
+                inputMode="numeric"
+                value={getDisplayValue('initialInvestment')}
+                onChange={(e) => handleInputChange('initialInvestment', e.target.value, initialInvestmentRef)}
                 placeholder="100.000.000 ₫"
               />
             </div>
 
+            <div className="form-heading">Bước 2: Khoản đóng góp</div>
             <div className="input-group">
-              <label htmlFor="monthlyContribution">Đóng Góp Hàng Tháng</label>
+              <div>
+                <label htmlFor="monthlyContribution">Đóng Góp Hàng Tháng</label>
+                <small>Số tiền bạn định thêm vào tiền gốc hàng tháng.</small>
+              </div>
               <input
+                ref={monthlyContributionRef}
                 id="monthlyContribution"
-                type="text"
-                value={formatNumber(formData.monthlyContribution)}
-                onChange={(e) => handleInputChange('monthlyContribution', e.target.value)}
+                type="tel"
+                inputMode="numeric"
+                value={getDisplayValue('monthlyContribution')}
+                onChange={(e) => handleInputChange('monthlyContribution', e.target.value, monthlyContributionRef)}
                 placeholder="5.000.000 ₫"
               />
             </div>
 
             <div className="input-group">
-              <label htmlFor="interestRate">Lãi Suất Hàng Năm</label>
-              <input
-                id="interestRate"
-                type="text"
-                value={formatInterestRate(formData.interestRate)}
-                onChange={(e) => handleInputChange('interestRate', e.target.value)}
-                placeholder="7.2 % hoặc 7,2 %"
-              />
-            </div>
-
-            <div className="input-group">
-              <label htmlFor="years">Thời Gian Đầu Tư (Năm)</label>
+              <div>
+                <label htmlFor="years">Thời Gian Đầu Tư (Năm)</label>
+                <small>Khoảng thời gian, tính bằng năm, mà bạn dự định tiết kiệm.</small>
+              </div>
               <input
                 id="years"
-                type="number"
-                min="1"
-                step="1"
+                type="tel"
+                inputMode="numeric"
                 value={formData.years}
                 onChange={(e) => handleInputChange('years', e.target.value)}
                 placeholder="20"
               />
             </div>
+          <div className="form-heading">Bước 3: Lãi suất</div>
+          <div className="input-group">
+              <div>
+                <label htmlFor="interestRate">Lãi suất (%)</label>
+                <small>Lãi suất ước tính theo kỳ hạn gửi của bạn.</small>
+              </div>
+              <input
+                ref={interestRateRef}
+                id="interestRate"
+                type="tel"
+                inputMode="decimal"
+                value={getDisplayValue('interestRate')}
+                onChange={(e) => handleInputChange('interestRate', e.target.value, interestRateRef)}
+                placeholder="7.2 % hoặc 7,2 %"
+              />
+            </div>
 
+            <div className="form-heading">Bước 4: Kỳ hạn</div>
             <div className="input-group">
-              <label htmlFor="compoundFrequency">Tần Suất Ghép Lãi</label>
+              <div>
+                <label htmlFor="compoundFrequency">Định kỳ gửi</label>
+                <small>Khoảng thời gian, tính bằng năm, mà bạn dự định tiết kiệm.</small>
+              </div>
               <select
                 id="compoundFrequency"
                 value={formData.compoundFrequency}
